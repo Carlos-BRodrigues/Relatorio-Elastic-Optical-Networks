@@ -7,7 +7,7 @@
 ---
 
 ## 1. Introdução às Redes Ópticas Elásticas
-Redes ópticas elásticas (EONs) são uma evolução recente das redes de fibra óptica, e podem ser caracterizadas como sucessoras da tecnologia DWDM (dense wavelength division multiplexing). Para a compreensão das vantagens das EONs, vamos esclarecer as características da fibra óptica e de suas diferentes versões.
+Redes ópticas elásticas (EONs) são uma evolução recente das redes de fibra óptica, proposta por M. Jinno em 2008, e podem ser caracterizadas como sucessoras da tecnologia DWDM (dense wavelength division multiplexing). Para a compreensão das vantagens das EONs, vamos esclarecer as características da fibra óptica e de suas diferentes versões.
 
 Um enlace de fibra óptica é capaz de transmitir dados na forma de luz, o que permite taxas de transmissão muito altas e grandes distâncias. Para isso, o sinal elétrico é convertido em um sinal eletromagnético e transmitido por um cabo de fibra óptica. Um cabo de fibra óptica — normalmente construído com sílica, um tipo de vidro — é composto por um núcleo, uma casca, cujo índice de refração é menor que o do núcleo, e um revestimento protetor. Com essa configuração, a luz sofre reflexão interna total e permanece no núcleo, assim sendo transmitida pelo cabo.
 
