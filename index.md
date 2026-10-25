@@ -34,11 +34,50 @@ Essas funcionalidades são suportadas pelo transponder de largura de banda vari�
 
 ## 3. O problema de Roteamento e Alocação de Espectro
 
+O problema de Roteamento e Alocação de Espectro (Routing and Spectre Allocation) é o problema de otimização central de otimização e controle em redes ópticas elásticas. Substitui e deriva do clássico problema de Roteamento e Atribuição de Comprimento de Onda (Routing and Wavelength Attribution) das redes WDM tradicionais ao substituir a grade fixa de faixas (tipicamente 50 GHz ou 100 GHz) por uma grade flexível (flex-grid, estandardizada pelo ITU-T G.694.1) composta por unidades granulares denominadas Slots de Frequência (Frequency Slots), normalmente de 12,5 GHz (ou múltiplos de 6,25 GHz). 
+
+Para atender a uma requisição de conexão óptica (lightpath) entre um nó de origem "s" e um nó de destino "d" com taxa de transmissão "B", o objetivo do RSA consiste em determinar, simultaneamente, uma rota física no grafo da rede e um conjunto de slots de frequência capazes de transportar o sinal sem violar as restrições físicas da camada óptica.
+
+<img width="399" height="250" alt="images" src="https://github.com/user-attachments/assets/4dcf1141-e9ab-49e2-a7ac-6596df22b78b" />
+
+A figura acima contrasta uma grade fixa WDM e uma grade flexível EON. Enquanto a rede WDM (A) subutiliza um canal inteiro de 50 GHz para uma demanda de 10G e exige múltiplos canais independentes para 400G, a rede óptica elástica (B) aloca exatamente a largura espectral necessária para demandas heterogêneas (10G, 60G, 300G) agrupando slots adjacentes em supercanais.
+
+Para formular o problema, primeiramente modela-se a rede óptica como um grafo G = (V, E), onde V é o conjunto de nós (comutadores ópticos BV-OXCs / ROADMs baseados em Bandwidth-Variable Wavelength Selective Switches) e E é o conjunto de enlaces de fibra óptica. Cada enlace e pertencente a E dispõe de um conjunto ordenado de slots de frequência F = {1, 2, ..., F}.
+
+Para que uma requisição r = {s, d, n}, a qual demanda n slots de frequência, seja estabelecida por caminho físico P(s,d) contido em E, o RSA exige que sejam estritamente cumpridas três restrições. A primeira delas é a restrição de contiguidade do espectro, na qual n slots alocados para uma mesma requisição em um enlace e devem ser estritamente adjacentes no domínio da frequência. Se o índice do slot inicial é "x", o bloco espectral ocupado deve ser o intervalo contínuo S(r) = {x, x+1, x+2, ..., x+n-1}.
+
+A segunda restrição é a restrição de continuidade do espectro, isto é, na ausência de conversores de espectro nos nós intermediários, o lightpath deve ocupar exatamente os mesmos índices de slots S(r) em todos os enlaces "e" pertencentes a P(s,d) que compõem a rota selecionada do nó de origem ao destino.
+
+A terceira restrição é a restrição de não-sobreposição, que consiste no fato de dois lightpaths distintos que dividam um ou mais enlaces físicos (P₁ ∩ P₂ ≠ ∅) não poderem usufruir do mesmo slot de frequência f nesses enlaces compartilhados simultaneamente.
+
+Todavia, na prática, o número de slots n requisitado por uma demanda de taxa de bits B (em gigabits por segundo) depende do formato de modulação $m$ escolhido nos transponders de largura de banda variável (Bandwidth-Variable Transponders) e da distância física da rota P(s,d), dando origem ao problema RMLSA (Routing, Modulation Level, and Spectrum Allocation), cuja principal equação é esta:
+
+n = ⌈B / (ηₘ · Δfₛₗₒₜ)⌉ + n_GB
+
+Em que Δfₛₗₒₜ é a largura de banda de um slot de frequência, ηₘ é a eficiência espectral do formato de modulação em bits/s/Hz, que varia conforme o nível de dupla polarização, e n_GB é o número de slots de banda de guarda (Guard Band) inseridos entre conexões adjacentes para evitar interferência de canal adjacente (crosstalk) devido às limitações de filtragem dos WSSs.
+
+O problema RSA é comprovadamente NP-difícil (reduz-se ao problema de coloração de grafos de intervalos somado ao fluxo de múltiplos produtos). A escolha da abordagem de solução depende do cenário de operação da rede. Por exemplo, no cenário do RSA Estático (ou seja, offline), a matriz de tráfego é conhecida anteriormente (por meio de planejamento de capacidade). Nesse cenário, o objetivo é minimizar o índice máximo de slot utilizado (Fmax​) ou minimizar o número de transponders e/ou fibras. Abordagens comuns para resolução são Programação Linear Inteira Mista (Integral Linear Programming / Mixed Integral Linear Programming), decomposição em colunas ou até mesmo a utilização de meta-heurísticas (e.g. algoritmos genéticos e Simulated Annealing).
+
+Já no cenário de RSA Dinâmico (online), as requisições chegam e partem estocasticamente em tempo real. Nessa situação, o objetivo é minimizar a Probabilidade de Bloqueio (Block Probability) ou a Taxa de Bloqueio de Banda (Band Block Rate) com baixa latência de decisão. Abordagens comuns para resolução são decomposição em K-Caminhos Mínimos (KSP) [aliada a políticas de alocação (First-Fit, Exact-Fit)] e aprendizado por reforço profundo (Deep Reinforcement Learning). Nesse caso específico, o problema é resolvido em duas etapas sequenciais (ou conjuntas em lista de candidatos), que como a própria sigla RSA já indica, são os sub-problemas do roteamento e da alocação de espectro.
+
+No subproblema de roteamento, uma técnica denominada Roteamento Fixo Alternativo é utilizada para calcular os K menores caminhos físicos (via algoritmo de Yen) entre (s, d) e testa a disponibilidade espectral em ordem crescente de distância (favorecendo modulações de maior ordem no RMLSA). Outra técnica, denominada Least Congested Path (LCP), seleciona o caminho com maior disponibilidade de slots livres contíguos ou menor taxa de ocupação média nos enlaces.
+
+No subproblema da alocação de espectro, existem três técnicas principais para resolução.
+
+First-Fit (FF): Percorre a grade de frequência a partir do índice f = 1 e aloca o primeiro bloco contíguo e contínuo de n slots livres. Compacta o tráfego na parte inferior do espectro, deixando blocos maiores livres no topo.
+
+Exact-Fit (EF): Busca uma lacuna espectral livre cujo tamanho seja exatamente igual a n slots. Caso não exista, recorre ao First-Fit. Preserva blocos contíguos maiores para futuras demandas de alta capacidade.
+
+Last-Fit / Random-Fit / First-Last-Fit: Particionam o espectro em zonas (ex.: requisições pequenas em índices baixos via First-Fit e requisições grandes em índices altos via Last-Fit) para reduzir a colisão entre perfis de tráfego distintos.
+
+Todavia, a combinação das restrições de contiguidade e continuidade sob tráfego dinâmico (chegadas e partidas de demandas com larguras variadas n) provoca a fragmentação espectral, caracterizada pelo fato de o espectro disponível nos enlaces ficar pulverizado em pequenos blocos isolados de slots livres que não são adjacentes no mesmo enlace (fragmentação vertical/intralink) ou não estão alinhados nos mesmos índices ao longo dos enlaces de uma rota (fragmentação horizontal/interlink). Uma forma de mitigar o problema é ativamente reconfigurar lightpaths em operação (Hitless Defragmentation, como Push-Pull ou Make-Before-Break) para compactar conexões existentes sem interromper o tráfego, ou roteamento ciente de fragmentação (Fragmentation-Aware RSA).
+
 
 ## 4. Controle, Design e Gerenciamento da Rede
 
 
 ## 5. Tópicos Avançados e Tendências
+
 
 
 ## 6. Conclusões
