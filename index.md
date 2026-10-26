@@ -78,6 +78,40 @@ Todavia, a combinação das restrições de contiguidade e continuidade sob trá
 
 ## 5. Tópicos Avançados e Tendências
 
+A evolução das Redes Ópticas Elásticas (EONs) concentra-se em superar o limite não-linear de Shannon das fibras monomodo padrão (SSMF) operando exclusivamente na Banda C (~4,8 THz). À medida que o tráfego de datacenters, 5G/6G e treinamentos distribuídos de IA exige enlaces de 800 Gbps, 1,6 Tbps e além, o problema clássico de RSA expande-se em quatro frentes principais: novas dimensões físicas (espectro multi-banda e espaço), modelagem exata da camada física (QoT e formatação de constelação), controle autônomo via aprendizado de máquina (DRL e GNNs) e desagregação aberta / coexistência quântica.
+
+I. Redes ópticas multi-banda (MB-EONs) e o problema RMBSA
+
+Enquanto a implantação de novos cabos de fibra óptica exige alto investimento de capital (CAPEX), as fibras ITU-T G.652.D já instaladas no mundo possuem uma janela de baixa atenuação que vai muito além da tradicional C-Band (1530–1565 nm). As MB-EONs (Multi-Band EONs) exploram toda a janela espectral da sílica, estendendo a transmissão para as bandas L (1565–1625 nm), S (1460–1530 nm), E (1360–1460 nm) e O (1260–1360 nm), multiplicando a largura de banda utilizável de ~4,8 THz para mais de 50 THz.
+
+<img width="600" height="286" alt="images" src="https://github.com/user-attachments/assets/49a5da17-d9dd-490a-8ca3-e258ade8413c" />
+
+A imagem acima demonstra o perfil de bandas espectrais O, E, S, C e L em fibras ITU-T G.652. Como ilustrado no perfil de atenuação (Attenuation [dB/km] vs. Wavelength [nm]) acima, a eliminação do pico de absorção de hidroxila (Water peak na E-Band, em torno de 1383 nm) nas fibras modernas ITU-T G.652 Fiber (linha tracejada azul) viabiliza o uso contínuo desde a O-Band até a L-Band. Contudo, o problema de alocação evolui de RSA para RMBSA (Routing, Modulation, Band, and Spectrum Allocation), introduzindo desafios físicos severos. Dentre esses desafios, está o espalhamento Raman estimulado intercanal (ISRS — Inter-channel Stimulated Raman Scattering). Consiste no fato de que, em transmissões de banda ultralarga (e. g. S-Band + C-Band + L-Band), o efeito não linear de Raman transfere potência óptica das frequências mais altas (comprimentos de onda menores, como S-Band e C-Band) para as frequências mais baixas (L-Band), com pico de ganho em deslocamentos de ~13,2 THz. Isso cria uma inclinação espectral (spectral tilt) dinâmica: alocar um novo lightpath na Banda S altera instantaneamente a relação sinal-ruído (SNR) de conexões já ativas nas Bandas C e L.
+
+Outro entrave físico é o fato de amplificadores a fibra dopada com Érbio (EDFAs) operarem apenas nas bandas C e L. A expansão multi-banda exige arquiteturas híbridas com amplificadores dopados com Túlio (TDFAs para a S-Band), Bismuto (BDFAs para E-Band e O-Band), amplificadores ópticos a semicondutor (SOAs) ou amplificação Raman distribuída, cada qual com figura de ruído (NF) e ganho distintos.
+
+II. Multiplexação por divisão espacial (SDM-EONs) e o problema RMSCA
+
+Para escalar a capacidade em uma ou duas ordens de grandeza por fibra, as SDM-EONs (Space-Division Multiplexing EONs) adicionam a dimensão espacial ao domínio tempo-frequência por meio de três tecnologias de fibra, que são as fibras de múltiplos núcleos fracamente acoplados (Weakly-Coupled Multi-Core Fibers — WC-MCF), que consistem em múltiplos núcleos monomodo independentes (tipicamente 4, 7, 12 ou 19 núcleos) compartilhando a mesma casca (cladding); fibras de poucos modos (Few-Mode Fibers — FMF) e MCFs fortemente acopladas, as quais realizam transmissão simultânea em múltiplos modos de propagação espacial (LP01, LP11A, LP11B... ), exigindo processamento digital de sinais MIMO (Multiple-Input Multiple-Output) no receptor coerente para desacoplar os modos; e feixes de fibras monomodo (SMF Bundles), as quais consistem em múltiplas fibras paralelas com chaveamento conjunto nos ROADMs.
+
+Nas SDM-EONs, o RSA transforma-se no problema RMSCA (Routing, Modulation, Spectrum, and Core/Space Allocation). Além da contiguidade e continuidade espectral (e continuidade de núcleo, caso não haja comutadores espaciais de conversão de núcleo), surge um novo fenômeno limitante nas WC-MCFs, que é a diafonia entre núcleos (Inter-Core Crosstalk — IC-XT). Quando dois núcleos fisicamente adjacentes dentro da mesma fibra utilizam os mesmos slots de frequência simultaneamente no mesmo enlace, o acoplamento de campo evanescente vaza potência entre os núcleos. A principal consequência disso é que, em vez de alocar n slots contíguos em um único núcleo (Supercanal Espectral), um Supercanal Espacial aloca o mesmo índice de slot f(i) através de K núcleos simultaneamente. Isso reduz drasticamente o custo e a complexidade dos nós ópticos (BV-OXCs), pois um único filtro WSS pode comutar todos os núcleos de uma só vez (Joint Switching), ao custo de impor alinhamento espectral entre os núcleos. 
+
+III. Controle e Segurança
+
+A arquitetura de controle e segurança das EONs também passa por três transformações estruturais, dentre elas:
+
+Desagregação óptica e controle SDN aberto: 
+
+Consiste na substituição de sistemas monolíticos proprietários (vendor lock-in) por redes ópticas abertas e desagregadas (iniciativas OpenROADM, Telecom Infra Project — OOPT e ONF). Controladores SDN (como ONOS e TeraFlowSDN) configuram transponders e ROADMs multimarcas via modelos de dados padronizados YANG / NETCONF / RESTCONF e coletam telemetria contínua via gNMI/gRPC, utilizando motores físicos abertos como o GNPy para alimentar um Gêmeo Digital Óptico (Optical Digital Twin).
+
+Coexistência de distribuição quântica de chaves (QKD) em EONs: 
+
+Para proteger a infraestrutura crítica contra computadores quânticos, canais quânticos (DV-QKD ou CV-QKD, transmitindo fótons únicos) precisam compartilhar a mesma fibra óptica com supercanais clássicos de alta potência. O algoritmo de RSA precisa alocar o espectro clássico de modo a minimizar o ruído de Espalhamento Raman Espontâneo (SpRS) e Mistura de Quatro Ondas (FWM) que cai sobre a janela espectral do canal quântico (frequentemente alocando o canal quântico na O-Band e os dados clássicos na C-Band, ou isolando-os em núcleos dedicados em fibras MCF).
+
+Sobrevivência avançada e "degradação graciosa" (Squeezed Protection): 
+
+Em cenários de desastres ou cortes múltiplos de fibra, o uso de BVTs elásticos com PCS permite que rotas de proteção compartilhada (SBPP — Shared Backup Path Protection) operem com largura espectral ou taxa de bits temporariamente comprimida (spectrum squeezing), garantindo conectividade crítica mesmo sob escassez severa de slots.
+
 
 
 ## 6. Conclusões
